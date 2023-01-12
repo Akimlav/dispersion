@@ -11,13 +11,15 @@ import matplotlib.pyplot as plt #import matplotlib.pyplot as plt to plot graphs
 from scipy.signal import convolve #import convolve function from scipy.signal library
 
 #Parameters values -- User inputs floats
-time = 0.4 #event duration, in seconds
-time2 = 300
+time = 1 #event duration, in seconds
+time2 = 3
+delta_t = 1 #(s) time-steps
+delta_t2 = 1 #(s) time-steps
 # time2 = 5
 l = 3 #x-length (m) of room
 w = 3 #y-length (m) of room
 h = 3 #z-length (m) of room
-x_o = 1 #x-coordinate of source
+x_o = 0.5 #x-coordinate of source
 y_o = 1.5 #y-coordinate of source
 v = 0.5 #air velocity (m/s) from left to right. 
 R = 10 #aerosol emission rate (particles/s)
@@ -26,7 +28,7 @@ K = 0.0053 # Eddy diffusion coefficient (m^2/s)
 d = 0 #1.7*10**(-4) #deactivation rate (s^-1)
 s = 0 # 1.1*10**(-4) #settling rate (s^-1)
 delta_x = 0.05 #(m) mesh-size
-delta_t = 0.1 #(s) time-steps
+
 
 #set up mesh
 n_x = int(l / delta_x) + 1 #int: calculate number of x-steps
@@ -38,24 +40,25 @@ X,Y = np.meshgrid(x,y) #define numpy meshgrid for X,Y
 
 timelist = [time, time2]
 reslist = []
-
+deltaTlist = [delta_t, delta_t2]
 vmax = 100
 levels = np.linspace(0, vmax, n_x+1)
 
 
-for tt in timelist:
+for tt in range(len(timelist)):
     C = np.zeros_like(X)
     term1temp = []
     term2temp = []
     term3temp = []
     #time-axis
-    t_end = tt
-    n_t = int(t_end/delta_t)
-    t_arr = np.linspace(delta_t,t_end,n_t) 
+    t_end = timelist[tt]
+    n_t = int(t_end/deltaTlist[tt])
+    t_arr = np.linspace(deltaTlist[tt],t_end,n_t) 
     S = delta_t * np.full(len(t_arr), R)
-    m = 0 #int(v/(2*l) *time) 
+    m = int(v/(2*l) *time) 
+    print(m)
     for t in range(1,len(t_arr)+1):
-        print(round(t_arr[t-1],3))
+        # print(round(t_arr[t-1],3))
         t1 = np.zeros_like(X)
         t2 = np.zeros_like(Y)
         for i in range(len(x)):
@@ -92,16 +95,19 @@ for tt in timelist:
     fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
     cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
     plt.colorbar(cp)
+    fig.tight_layout()
     plt.axis('square') 
     plt.show()
     
 # a = np.subtract(reslist[1],reslist[0])
-R = abs(np.subtract(reslist[0], reslist[1]))
-rr = np.unravel_index(R.argmax(), R.shape)
-print(sum(sum(R)), R[int(ccc[0]),int(ccc[1])], rr, R[rr[0]][rr[1]])
+R = np.subtract(reslist[1], reslist[0])
+RR =np.subtract(reslist[1], R)
+rr = np.unravel_index(RR.argmax(), RR.shape)
+print(sum(sum(RR)), RR[int(ccc[0]),int(ccc[1])], rr, RR[rr[0]][rr[1]])
 
 fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-cp = ax.contourf(X, Y, abs(R), levels=10, vmin=0, vmax=2)
+cp = ax.contourf(X, Y, RR, levels=levels, vmin=0, vmax=100)
 plt.colorbar(cp)
+fig.tight_layout()
 plt.axis('square') 
 plt.show()
