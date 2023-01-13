@@ -9,9 +9,10 @@ Created on Wed Jan 11 18:48:46 2023
 import numpy as np #import numpy as np, to enable numpy arrays and numpy meshgrid
 import matplotlib.pyplot as plt #import matplotlib.pyplot as plt to plot graphs
 from scipy.signal import convolve #import convolve function from scipy.signal library
+import scipy.fftpack
 
 #Parameters values -- User inputs floats
-time = 10 #event duration, in seconds
+time = 1 #event duration, in seconds
 # time2 = 3
 delta_t = 0.1 #(s) time-steps
 # delta_t2 = 1 #(s) time-steps
@@ -22,12 +23,12 @@ h = 2 #z-length (m) of room
 x_o = 1 #x-coordinate of source
 y_o = 1 #y-coordinate of source
 v = 1 #air velocity (m/s) from left to right. 
-R = 10 #aerosol emission rate (particles/s)
+R = 1 #aerosol emission rate (particles/s)
 Q = 0 #0.002 # Air exchange rate (s^-1)
 K = 5e-3 #0.0053 # Eddy diffusion coefficient (m^2/s)
 d = 0 #1.7*10**(-4) #deactivation rate (s^-1)
 s = 0 # 1.1*10**(-4) #settling rate (s^-1)
-delta_x = 0.025 #(m) mesh-size
+delta_x = 0.025  #(m) mesh-size
 
 
 #set up mesh
@@ -54,10 +55,12 @@ term3temp = []
 t_end = time
 n_t = int(t_end/delta_t)
 t_arr = np.linspace(delta_t,t_end,n_t)
+# t_arr = t_arr[4:]
 # S = delta_t * np.full(len(t_arr), R)
-m = 10 #int(v/(2*l) *time) 
+m = 25 #int(v/(2*l) *time) 
 
 for t in range(0,len(t_arr)):
+    print('_____________________________________________________________')
     print(round(t_arr[t],3))
     t1 = np.zeros_like(X)
     t2 = np.zeros_like(Y)
@@ -66,9 +69,9 @@ for t in range(0,len(t_arr)):
             t1[i][j] = np.exp(-((X[i][j]-x_o-v*t_arr[t])**2)/(4*K*t_arr[t])) + np.exp(-((X[i][j]+x_o+v*t_arr[t])**2)/(4*K*t_arr[t]))
             t2[i][j] = np.exp(-((Y[i][j]-y_o)**2)/(4*K*t_arr[t])) + np.exp(-((Y[i][j]+y_o)**2)/(4*K*t_arr[t]))
             for n in range(1,m+1):
-                t1[i][j] += np.exp(-((X[i][j]-x_o -v*t_arr[t] + 2*n*l)**2)/(4*K*t_arr[t])) + np.exp(-((X[i][j]+x_o+v*t_arr[t] - 2*n*l)**2)/(4*K*t_arr[t]))
-                t1[i][j] += np.exp(-((X[i][j]-x_o -v*t_arr[t] - 2*n*l)**2)/(4*K*t_arr[t])) + np.exp(-((X[i][j]+x_o+v*t_arr[t] + 2*n*l)**2)/(4*K*t_arr[t]))
-            for n in range(1,5):
+                t1[i][j] += np.exp(-((X[i][j]-x_o-v*t_arr[t] + 2*n*l)**2)/(4*K*t_arr[t])) + np.exp(-((X[i][j]+x_o+v*t_arr[t] - 2*n*l)**2)/(4*K*t_arr[t]))
+                t1[i][j] += np.exp(-((X[i][j]-x_o-v*t_arr[t] - 2*n*l)**2)/(4*K*t_arr[t])) + np.exp(-((X[i][j]+x_o+v*t_arr[t] + 2*n*l)**2)/(4*K*t_arr[t]))
+            for n in range(1,4):
                 t2[i][j] += np.exp(-((Y[i][j]-y_o - 2*n*w)**2)/(4*K*t_arr[t])) + np.exp(-((Y[i][j]+y_o + 2*n*w)**2)/(4*K*t_arr[t]))
                 t2[i][j] += np.exp(-((Y[i][j]-y_o + 2*n*w)**2)/(4*K*t_arr[t])) + np.exp(-((Y[i][j]+y_o - 2*n*w)**2)/(4*K*t_arr[t]))
     
@@ -83,38 +86,81 @@ for t in range(0,len(t_arr)):
     
     term1tempArr[np.isnan(term1tempArr)] = 0
     term2tempArr[np.isnan(term2tempArr)] = 0
-    if t_arr[t] > 0.4:
-    #     # t1 = np.zeros_like(X)
-    #     # t2 = np.zeros_like(Y)
-    #     t1 = 
-    #     t2 = 
-        S = np.full(np.shape(term1temp)[0], 1e-10)#R)
-    else:
-        S = np.full(np.shape(term1temp)[0], R)
+
+
+    S = np.full(np.shape(term1temp)[0], R)*delta_t
     C = np.zeros_like(X)
+    CC = np.zeros_like(X)
+    integlist = []
+    
     for i in range(len(x)):
         for j in range(len(y)):
-            integ = 1/(4*np.pi*K*t_arr[t]) * term1tempArr[0,i,:] * term2tempArr[j,0,:] * term3temp[t]
+            integ = 1/(4*np.pi*K*t_arr[:t+1]) * term1tempArr[0,i,:] * term2tempArr[j,0,:] * term3temp[:t+1]
             C[j][i] = convolve(S,integ,mode='valid') / (h/2)
-                    
-    # reslist.append(C)
-    # if t_arr[t] > 0.4:
-        # newres = np.subtract(reslist[-1], np.subtract(reslist[3],reslist[4]))
-    # if t > 4:
-    #     newres = 
+            # r = scipy.fftpack.fft(S).real * scipy.fftpack.fft(integ).real
+            # rr = scipy.fftpack.ifft(r).real
+            # print(rr)
+            # C[j][i] = rr[0]
+    reslist.append(C)
     
-    cc = np.unravel_index(C.argmax(), C.shape)
-    ccc = np.subtract(np.asarray(t1.shape),1)/2
-    print('ps', sum(sum(C)), '|', C[int(ccc[0]), int(ccc[1])],'|', 
-          'max value: ',cc, C[cc[0]][cc[1]])
-    
-    # A = reslist[16] + np.subtract(reslist[15], reslist[16])
     fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-    cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
+    ax.set_title('Normal')
+    cp = ax.contourf(X, Y, term1tempArr[:,:,-1], levels=levels, vmin=0, vmax=vmax)
     plt.colorbar(cp)
     fig.tight_layout()
     plt.axis('square') 
     plt.show()
+    cc = np.unravel_index(C.argmax(), C.shape)
+    ccc = np.subtract(np.asarray(t1.shape),1)/2
+    print('ps', sum(sum(C)), '|', C[int(ccc[0]), int(ccc[1])],'|', 
+          'max value: ',cc, C[cc[0]][cc[1]])
+        
+    # if t_arr[t] > 0.4:
+    #     a = np.subtract(reslist[t],reslist[3])
+    #     aa = np.subtract(reslist[t],a)
+ 
+    #     print('subtracted')
+    #     fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
+    #     ax.set_title('subtracted')
+    #     cp = ax.contourf(X, Y, aa, levels=levels, vmin=0, vmax=vmax)
+    #     plt.colorbar(cp)
+    #     fig.tight_layout()
+    #     plt.axis('square') 
+    #     plt.show()
+    #     cc = np.unravel_index(aa.argmax(), aa.shape)
+    #     ccc = np.subtract(np.asarray(t1.shape),1)/2
+    #     print('ps', sum(sum(aa)), '|', aa[int(ccc[0]), int(ccc[1])],'|', 
+    #           'max value: ',cc, C[cc[0]][cc[1]])
+    # else:
+    #     fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
+    #     cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
+    #     plt.colorbar(cp)
+    #     fig.tight_layout()
+    #     plt.axis('square') 
+    #     plt.show()
+        
+    #     cc = np.unravel_index(C.argmax(), C.shape)
+    #     ccc = np.subtract(np.asarray(t1.shape),1)/2
+    #     print('ps', sum(sum(C)), '|', C[int(ccc[0]), int(ccc[1])],'|', 
+    #           'max value: ',cc, C[cc[0]][cc[1]])
+        # newres = np.subtract(reslist[-1], np.subtract(reslist[3],reslist[4]))
+    # if t > 4:
+    #     newres = 
+    
+    
+    
+    # # # A = reslist[16] + np.subtract(reslist[15], reslist[16])
+    # fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
+    # cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
+    # plt.colorbar(cp)
+    # fig.tight_layout()
+    # plt.axis('square') 
+    # plt.show()
+    # cc = np.unravel_index(C.argmax(), C.shape)
+    # ccc = np.subtract(np.asarray(t1.shape),1)/2
+    # print('ps', sum(sum(C)), '|', C[int(ccc[0]), int(ccc[1])],'|', 
+    #       'max value: ',cc, C[cc[0]][cc[1]])
+
     
 # a = np.subtract(reslist[1],reslist[0])
 # R = np.subtract(reslist[1], reslist[0])
@@ -128,3 +174,10 @@ for t in range(0,len(t_arr)):
 # fig.tight_layout()
 # plt.axis('square') 
 # plt.show()
+a = np.asarray([1,2,3])
+b = np.asarray([4,5,6])
+b  = list(reversed(b))
+c= 0
+for i in range(len(a)):
+    c += a[i]*b[i]
+    print(c)
