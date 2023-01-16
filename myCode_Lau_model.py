@@ -42,7 +42,7 @@ X,Y = np.meshgrid(x,y) #define numpy meshgrid for X,Y
 # timelist = [time, time2]
 reslist = []
 # deltaTlist = [delta_t, delta_t2]
-vmax = 300
+vmax = 30
 levels = np.linspace(0, vmax, n_x+1)
 
 
@@ -57,7 +57,7 @@ n_t = int(t_end/delta_t)
 t_arr = np.linspace(delta_t,t_end,n_t)
 # t_arr = t_arr[4:]
 # S = delta_t * np.full(len(t_arr), R)
-m = 25 #int(v/(2*l) *time) 
+m = 100 #int(v/(2*l) *time) 
 
 for t in range(0,len(t_arr)):
     print('_____________________________________________________________')
@@ -89,6 +89,8 @@ for t in range(0,len(t_arr)):
 
 
     S = np.full(np.shape(term1temp)[0], R)*delta_t
+    newS = np.ones(len(S))
+    newS[:4] = R*delta_t
     C = np.zeros_like(X)
     CC = np.zeros_like(X)
     integlist = []
@@ -101,83 +103,38 @@ for t in range(0,len(t_arr)):
             # rr = scipy.fftpack.ifft(r).real
             # print(rr)
             # C[j][i] = rr[0]
+            # c= 0
+            # for ii in range(len(newS)):
+                # c += integ[ii]*delta_t
+            # CC[j][i] = c
+            
     reslist.append(C)
-    
-    fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-    ax.set_title('Normal')
-    cp = ax.contourf(X, Y, term1tempArr[:,:,-1], levels=levels, vmin=0, vmax=vmax)
-    plt.colorbar(cp)
-    fig.tight_layout()
-    plt.axis('square') 
-    plt.show()
     cc = np.unravel_index(C.argmax(), C.shape)
     ccc = np.subtract(np.asarray(t1.shape),1)/2
-    print('ps', sum(sum(C)), '|', C[int(ccc[0]), int(ccc[1])],'|', 
-          'max value: ',cc, C[cc[0]][cc[1]])
-        
-    # if t_arr[t] > 0.4:
-    #     a = np.subtract(reslist[t],reslist[3])
-    #     aa = np.subtract(reslist[t],a)
- 
-    #     print('subtracted')
-    #     fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-    #     ax.set_title('subtracted')
-    #     cp = ax.contourf(X, Y, aa, levels=levels, vmin=0, vmax=vmax)
-    #     plt.colorbar(cp)
-    #     fig.tight_layout()
-    #     plt.axis('square') 
-    #     plt.show()
-    #     cc = np.unravel_index(aa.argmax(), aa.shape)
-    #     ccc = np.subtract(np.asarray(t1.shape),1)/2
-    #     print('ps', sum(sum(aa)), '|', aa[int(ccc[0]), int(ccc[1])],'|', 
-    #           'max value: ',cc, C[cc[0]][cc[1]])
-    # else:
-    #     fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-    #     cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
-    #     plt.colorbar(cp)
-    #     fig.tight_layout()
-    #     plt.axis('square') 
-    #     plt.show()
-        
-    #     cc = np.unravel_index(C.argmax(), C.shape)
-    #     ccc = np.subtract(np.asarray(t1.shape),1)/2
-    #     print('ps', sum(sum(C)), '|', C[int(ccc[0]), int(ccc[1])],'|', 
-    #           'max value: ',cc, C[cc[0]][cc[1]])
-        # newres = np.subtract(reslist[-1], np.subtract(reslist[3],reslist[4]))
-    # if t > 4:
-    #     newres = 
-    
-    
-    
-    # # # A = reslist[16] + np.subtract(reslist[15], reslist[16])
-    # fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-    # cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
-    # plt.colorbar(cp)
-    # fig.tight_layout()
-    # plt.axis('square') 
-    # plt.show()
-    # cc = np.unravel_index(C.argmax(), C.shape)
-    # ccc = np.subtract(np.asarray(t1.shape),1)/2
-    # print('ps', sum(sum(C)), '|', C[int(ccc[0]), int(ccc[1])],'|', 
-    #       'max value: ',cc, C[cc[0]][cc[1]])
 
-    
-# a = np.subtract(reslist[1],reslist[0])
-# R = np.subtract(reslist[1], reslist[0])
-# RR =np.subtract(reslist[1], R)
-# rr = np.unravel_index(RR.argmax(), RR.shape)
-# print(sum(sum(RR)), RR[int(ccc[0]),int(ccc[1])], rr, RR[rr[0]][rr[1]])
+    # print(t - 3)
+    if t_arr[t] > 0.4:
+        print(t - 3)
+        
+        CCC = np.subtract(reslist[t],reslist[t-3])
 
-# fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-# cp = ax.contourf(X, Y, RR, levels=levels, vmin=0, vmax=100)
-# plt.colorbar(cp)
-# fig.tight_layout()
-# plt.axis('square') 
-# plt.show()
-a = np.asarray([1,2,3])
-b = np.asarray([4,5,6])
-b  = list(reversed(b))
-c= 0
-for i in range(len(a)):
-    c += a[i]*b[i]
-    print(c)
+        fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
+        ax.set_title('modified')
+        cp = ax.contourf(X, Y, CCC, levels=levels, vmin=0, vmax=vmax)
+        plt.colorbar(cp)
+        fig.tight_layout()
+        plt.axis('square')
+        plt.show()
+        print('ps', sum(sum(CCC)), '|', CCC[int(ccc[0]), int(ccc[1])],'|', 
+                'max value: ',cc, CCC[cc[0]][cc[1]])
+    else:
+        fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
+        ax.set_title('Normal')
+        cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
+        plt.colorbar(cp)
+        fig.tight_layout()
+        plt.axis('square') 
+        plt.show()
+        print('ps', sum(sum(C)), '|', C[int(ccc[0]), int(ccc[1])],'|', 
+              'max value: ',cc, C[cc[0]][cc[1]])
+    
