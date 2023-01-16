@@ -12,7 +12,7 @@ from scipy.signal import convolve #import convolve function from scipy.signal li
 import scipy.fftpack
 
 #Parameters values -- User inputs floats
-time = 1000 #event duration, in seconds
+time = 350 #event duration, in seconds
 t_inj = 0.4 #inhection duration, in seconds
 delta_t = 0.1 #(s) time-steps
 
@@ -111,7 +111,7 @@ for t in range(0,len(t_arr)):
         
         fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
         tt = np.round(t_arr[t],3)
-        ax.set_title('V: ' + str(v) + ', time: ' +  str(tt) + ' s')
+        ax.set_title('Concentration ', 'V: ' + str(v) + ', time: ' +  str(tt) + ' s')
         cp = ax.contourf(X, Y, CC, levels=levels, vmin=0, vmax=vmax)
         plt.colorbar(cp)
         plt.axis('square')
@@ -126,14 +126,14 @@ for t in range(0,len(t_arr)):
         diff1 = abs(CC[cc_max[0]][cc_max[1]] - CC[0,np.asarray(t1.shape)[0]-1])
         diff2 = abs(CC[cc_max[0]][cc_max[1]] - CC[np.asarray(t1.shape)[0]-1,0])
         diff3 = abs(CC[cc_max[0]][cc_max[1]] - CC[np.asarray(t1.shape)[0]-1, np.asarray(t1.shape)[0]-1])
-        if diff0 and diff1 and diff2 and diff3 < 1e-2:
+        if diff0 and diff1 and diff2 and diff3 < 1e-3:
             print('Converged!')
             print(diff0, diff1, diff2, diff3)
             break
     else:
         fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
         tt = np.round(t_arr[t],3)
-        ax.set_title('V: ' + str(v) + ', time: ' +  str(tt) + ' s')
+        ax.set_title('Concentration ', 'V: ' + str(v) + ', time: ' +  str(tt) + ' s')
         cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
         plt.colorbar(cp)
         plt.axis('square')
