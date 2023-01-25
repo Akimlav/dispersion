@@ -13,11 +13,11 @@ import time as timer
 
 start = timer.time()
 #Parameters values -- User inputs floats
-time = 5#event duration, in seconds
+time = 50#event duration, in seconds
 t_inj = 0.4 #inhection duration, in seconds
 delta_t = 0.1 #(s) time-steps
 
-delta_x = 0.05 #(m) mesh-size
+delta_x = 0.1 #(m) mesh-size
 
 l = 3.14 #x-length (m) of room
 w = 3.14 #y-length (m) of room
@@ -51,10 +51,11 @@ n_t = int(t_end/delta_t)
 t_arr = np.asarray(np.linspace(delta_t,t_end,n_t))
 
 
-sigmalist = []
-klist = [1e-1, 5e-3]
+
+klist = [1e-1,1e-2,1e-3,1e-4]
 colorlist = ['r','b','k','m','c','y']
 for K in klist:
+    sigmalist = []
     sigmaTsigma0list = []
     reslist = []
     t1sumsum = []
@@ -102,20 +103,10 @@ for K in klist:
             for j in range(len(y)):
                 integ = 1/(4*np.pi*K*t_arr[:t+1]) * term1tempArr[0,i,:] * term2tempArr[j,0,:] * term3temp[:t+1]
                 C[j][i] = fftconvolve(S,integ,mode='valid') / (h/2) #* delta_x**2
-                
-                # r = scipy.fftpack.fft(S).real * scipy.fftpack.fft(integ).real
-                # rr = scipy.fftpack.ifft(r).real
-                # print(rr)
-                # C[j][i] = rr[0]
-                # c= 0
-                # for ii in range(len(newS)):
-                    # c += integ[ii]*delta_t
-                # CC[j][i] = c
-                
+                                
         reslist.append(C)
         cc = np.unravel_index(C.argmax(), C.shape)
         ccc = np.subtract(np.asarray(t1.shape),1)/2
-        # c0max = reslist[0].argmax()
         
         if t_arr[t] > t_inj:
             sigma = np.zeros_like(X)
@@ -132,18 +123,7 @@ for K in klist:
             sigma = np.sqrt(sum(sum(sigma)) / (n_x*n_y))
             print('sigma: ', sigma)
             sigmalist.append(sigma)
-            
-            # fig,ax = plt.subplots(1,1,  figsize=(5.5, 5))
-            # tt = str(int(round(t_arr[t],3)*10)).zfill(5)
-            # ax.set_title('V: ' + str(v) + ', time: ' +  str(round(t_arr[t],3)) + ' s')
-            # cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
-            # plt.colorbar(cp)
-            # plt.axis('square')
-            # plt.ylabel('y, m')
-            # plt.xlabel('x, m')
-            # fig.tight_layout()
-            # plt.savefig('./conc_' + tt + '.png', dpi = 100)
-            # plt.show()
+        
             
             print('ps', sum(sum(C))/(l*w),'|', 'max value: ',cc_max, C[cc_max[0]][cc_max[1]])
             diff0 = abs(C[cc_max[0]][cc_max[1]] - C[0,0])
@@ -151,34 +131,7 @@ for K in klist:
             diff2 = abs(C[cc_max[0]][cc_max[1]] - C[np.asarray(t1.shape)[0]-1,0])
             diff3 = abs(C[cc_max[0]][cc_max[1]] - C[np.asarray(t1.shape)[0]-1, np.asarray(t1.shape)[0]-1])
           
-            # c0max = np.unravel_index(reslist[3].argmax(), reslist[3].shape)
-            # print(c0max)
-            
-            # if diff0 and diff1 and diff2 and diff3 < 1e-4:
-            #     print('Converged!')
-            #     print(diff0, diff1, diff2, diff3)
-            #     break
-        # else:
-            # fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-            # tt = str(int(round(t_arr[t],3)*10)).zfill(5)
-            # ax.set_title('V: ' + str(v) + ', time: ' +  str(round(t_arr[t],3)) + ' s')
-            # cp = ax.contourf(X, Y, C, levels=levels, vmin=0, vmax=vmax)
-            # plt.colorbar(cp)
-            # plt.axis('square')
-            # plt.ylabel('y, m')
-            # plt.xlabel('x, m')
-            # fig.tight_layout()
-            # plt.savefig('./conc_' + tt + '.png', dpi = 100)
-            # plt.show()
-            # print('ps', sum(sum(C))/(l*w), '|', C[int(ccc[0]), int(ccc[1])],'|', 
-                  # 'max value: ',cc, C[cc[0]][cc[1]])
-        
-        # c0max = np.unravel_index(reslist[0].argmax(), reslist[0].shape)
-        # cc_max = np.unravel_index(C.argmax(), C.shape)
-        # ctmax = C[cc_max[0]][cc_max[1]]
-        # val = C[int(ccc[0]),:]
-        # vallist.append(val)
-        # print('val', val)
+
         if K == klist[0]:
             linestyle = 'o'
             label = 'K = ' + str(klist[0])
@@ -200,19 +153,14 @@ for K in klist:
             label = 'K = ' + str(klist[4])
             color = 'y'
         
-        # sss = sum(sum(C))*delta_x**2
-        # if t == 0:
-            # plt.plot(t_arr[t], sss, marker = linestyle, label = label, color = color, markersize = 1)
-        # else:
-            # plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1)
         if t_arr[t] == t_inj+delta_t:
             sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
             sigmaTsigma0list.append(sss)
-            plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1, label = label)
+            plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 3, label = label)
         elif t_arr[t] > t_inj+delta_t:
             sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
             sigmaTsigma0list.append(sss)
-            plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1)
+            plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 3)
         end = timer.time()
         print('loop time ', round(end - start, 3), 's')
         
@@ -222,7 +170,7 @@ for K in klist:
 plt.ylabel('sigma[t]/sigma[t=0.4]')
 plt.xlabel('t, s')
 plt.legend(loc="upper right")
-plt.ylim(0,1)
+plt.ylim(0,1.1)
 plt.savefig('./sigma2.png', dpi = 200)
 plt.show()
         
@@ -238,13 +186,4 @@ def chunkIt(seq, num):
 
     return out
 
-# newlist = chunkIt(vallist, len(klist))
-
-# for k in range(len(klist)):
-#     plt.plot(t_arr[:len(newlist[k])], newlist[k], 'r-o', markersize = 0.5, label = 'K = ' + str(klist[k]), color = colorlist[k])
-# plt.legend(loc="upper right")
-# plt.ylabel('C_max/C0_max')
-# plt.xlabel('t, s')
-# plt.savefig('./k_cmax_c0max.png')
-# plt.show()
 
