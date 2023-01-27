@@ -54,6 +54,7 @@ t_arr = np.asarray(np.linspace(delta_t,t_end,n_t))
 sigmalist = []
 klist = [1e-1, 5e-3]
 colorlist = ['r','b','k','m','c','y']
+
 for K in klist:
     sigmaTsigma0list = []
     reslist = []
