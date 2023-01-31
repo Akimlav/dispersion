@@ -13,7 +13,7 @@ import time as timer
 
 start = timer.time()
 #Parameters values -- User inputs floats
-time = 5#event duration, in seconds
+time = 200#event duration, in seconds
 t_inj = 0.4 #inhection duration, in seconds
 delta_t = 0.1 #(s) time-steps
 
@@ -146,11 +146,11 @@ for K in klist:
             # plt.savefig('./conc_' + tt + '.png', dpi = 100)
             # plt.show()
             
-            print('ps', sum(sum(C))/(l*w),'|', 'max value: ',cc_max, C[cc_max[0]][cc_max[1]])
-            diff0 = abs(C[cc_max[0]][cc_max[1]] - C[0,0])
-            diff1 = abs(C[cc_max[0]][cc_max[1]] - C[0,np.asarray(t1.shape)[0]-1])
-            diff2 = abs(C[cc_max[0]][cc_max[1]] - C[np.asarray(t1.shape)[0]-1,0])
-            diff3 = abs(C[cc_max[0]][cc_max[1]] - C[np.asarray(t1.shape)[0]-1, np.asarray(t1.shape)[0]-1])
+            # print('ps', sum(sum(C))/(l*w),'|', 'max value: ',cc_max, C[cc_max[0]][cc_max[1]])
+            # diff0 = abs(C[cc_max[0]][cc_max[1]] - C[0,0])
+            # diff1 = abs(C[cc_max[0]][cc_max[1]] - C[0,np.asarray(t1.shape)[0]-1])
+            # diff2 = abs(C[cc_max[0]][cc_max[1]] - C[np.asarray(t1.shape)[0]-1,0])
+            # diff3 = abs(C[cc_max[0]][cc_max[1]] - C[np.asarray(t1.shape)[0]-1, np.asarray(t1.shape)[0]-1])
           
             # c0max = np.unravel_index(reslist[3].argmax(), reslist[3].shape)
             # print(c0max)
@@ -201,30 +201,32 @@ for K in klist:
             label = 'K = ' + str(klist[4])
             color = 'y'
         
-        # sss = sum(sum(C))*delta_x**2
-        # if t == 0:
-            # plt.plot(t_arr[t], sss, marker = linestyle, label = label, color = color, markersize = 1)
-        # else:
-            # plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1)
-        if t_arr[t] == t_inj+delta_t:
-            sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
-            sigmaTsigma0list.append(sss)
-            plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1, label = label)
-        elif t_arr[t] > t_inj+delta_t:
-            sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
-            sigmaTsigma0list.append(sss)
+        sss = sum(sum(C))*delta_x**2/(w*l)
+        if t == 0:
+            plt.plot(t_arr[t], sss, marker = linestyle, label = label, color = color, markersize = 1)
+        else:
             plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1)
+        # if t_arr[t] == t_inj+delta_t:
+        #     # sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
+        #     sigmaTsigma0list.append(sss)
+        #     plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1, label = label)
+        # elif t_arr[t] > t_inj+delta_t:
+        #     sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
+        #     sigmaTsigma0list.append(sss)
+        #     plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1)
         end = timer.time()
         print('loop time ', round(end - start, 3), 's')
         
     res = np.asarray([t_arr[4:],sigmaTsigma0list]).T
     np.savetxt('./sigma_' + str(K) + '.dat', res)
         
-plt.ylabel('sigma[t]/sigma[t=0.4]')
+# plt.ylabel('sigma[t]/sigma[t=0.4]')
+plt.ylabel('sum(C)dxdy/(l*w)')
 plt.xlabel('t, s')
-plt.legend(loc="upper right")
-plt.ylim(0,1)
-plt.savefig('./sigma2.png', dpi = 200)
+# plt.legend(loc="upper right")
+plt.legend(loc="lower right")
+# plt.ylim(0,1)
+plt.savefig('./intC.png', dpi = 200)
 plt.show()
         
     
