@@ -8,33 +8,43 @@ Created on Fri Jan 27 12:12:36 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpmath import nsum, inf
 
+def R1 (k):
+    ss = nsum(lambda m: np.e**(-((z[k] + 2*m*Lxi - z0)**2 / (4*D*tt))) + np.e**(-((z[k] + 2*m*Lxi + z0)**2 / (4*D*tt))), [-inf, inf])
+    return ss
+
+def R2 (j):
+    ss = nsum(lambda m: np.e**(-((eta[j]  + 2*m*Lxi - eta0)**2 / (4*D*tt))) + np.e**(-((eta[j]  + 2*m*Lxi + eta0)**2 / (4*D*tt))), [-inf, inf])
+    return ss
 
 S = 1      # generation rate
-# D = 0.001 # turbulent diffusion coefficient
-u = 0.0856   # constant velocity
+D = 0.0152 # turbulent diffusion coefficient
+u = 0.5 #0.0856 # constant velocity
 # Dimensions of the cube
 Lxi = 1
 Leta = 1
-Lz = 1 
+Lz = 1
+
 #source position
-xi0 =0.5  # initial xi position of the source
-eta0=0.5 # initial eta position of the source
-z0  =0   # initial z position of the source
+xi0 = 0.3  # initial xi position of the source
+eta0= 0.3  # initial eta position of the source
+z0  = 0.5     # initial z position of the source
 
 # grid for xi
-dxi = 0.05 # grid spacing
-nxi = int((4/dxi))+1 # four cubes
-xi = np.linspace(0, 4, nxi) # four cubes
-nx = int(((nxi-1)/4))+1 # four cubes
+dxi = 0.025 # grid spacing
+nx = int(np.ceil(Lxi/dxi)) # four cubes
+nxi = int(4*nx) # four cubes
+xi = np.linspace(0, 4*Lxi, nxi) # four cubes
+
 
 # grid for eta
 neta = nx  # number of points
-eta = np.linspace(0, 1, neta)
+eta = np.linspace(0, Leta, neta)
 
 # grid for z
 nz = neta
-z = np.linspace(Lz/-2, Lz/2, nz)
+z = np.linspace(0, Lz, nz)
 
 # grid for x and y (equal to the grid of eta)
 ny = neta
@@ -48,8 +58,8 @@ ETA,XI,Z = np.meshgrid(eta, xi, z)
 
 # times to perform the calculations
 tmin = 0
-tmax = 200
-dt = 0.1
+tmax = 100
+dt = 1
 t = np.linspace(tmin, tmax, int(tmax/dt)+1)
 t = t[1:]
 C = np.zeros((nxi, neta, nz))
@@ -61,89 +71,152 @@ C2m = np.zeros((nx, ny, nz))
 C3m = np.zeros((nx, ny, nz))
 C4m = np.zeros((nx, ny, nz))
 
-vmax = 25
+vmax = 1
 levels = np.linspace(0, vmax, nx+1)
 
 linestyle = 'o'
 # label = 'K = ' + str(klist[0])
 color = 'k'
-            
-klist = [1e-1, 1e-2, 1e-3, 1e-4]
-for D in klist:
-    sigmalist = []
-    sigmaTsigma0list = []
-    for tt in t:
-        sigma = np.zeros((nx, ny, nz))
-        for i in range(nxi):
-            for j in range(neta):
-                for k in range(nz):
-                    
-                    t1 = (xi[i] - xi0 - u*tt)**2 / (4*D*tt)
-                    #refklections along z
-                    t1Rz = (z[k] - z0)**2 / (4*D*tt)
-                    t2Rz = (z[k] + z0 - Lz)**2 / (4*D*tt)
-                    t3Rz = (z[k] + z0 + Lz)**2
-                    #refklections along eta
-                    t1Reta = (eta[j] - eta0)**2 / (4*D*tt)
-                    t2Reta = (eta[j] + eta0)**2 / (4*D*tt)
-                    t3Reta = (eta[j] + eta0 - 2*Leta)**2 / (4*D*tt)
-                    
-                    
-                    Rz = np.exp(-t1Rz) + np.exp(-t2Rz) + np.exp(-t3Rz)
-                    Reta = np.exp(-t1Reta) + np.exp(-t2Reta) + np.exp(-t3Reta)
-                    
-                    C[i,j,k] = (S/(8*(np.pi*tt*D)**(3/2))) * np.exp(-t1) * Rz * Reta
-                    
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    C1[i,j,k]=C[i,j,k]
-                    C2[i,j,k]=C[nx-1+i,j,k]
-                    C3[i,j,k]=C[2*(nx-1)+i,j,k]
-                    C4[i,j,k]=C[3*(nx-1)+i,j,k]
-                    
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
-                    C2m[i,j,k]=C2[j,nx-1-i,k]
-                    C3m[i,j,k]=C3[nx-1-i,ny-1-j,k]
-                    C4m[i,j,k]=C4[ny-1-j,i,k]
-    
-        Ctot = C1 + C2m + C3m + C4m
-        ctot2d = Ctot[:, :, int((nz + 1) / 2)]
-        
-        # fig,ax = plt.subplots(1,1, figsize=(5.5, 5))
-        # time = str(int(round(tt,3))).zfill(3)
-        # ax.set_title('V: ' + str(u) + ', time: ' +  str(time) + ' s')
-        # cp = ax.contourf(X, Y, ctot2d, levels=levels, vmin=0, vmax=vmax)
-        # plt.colorbar(cp)
-        # plt.axis('square')
-        # plt.ylabel('y, m')
-        # plt.xlabel('x, m')
-        # fig.tight_layout()
-        # # plt.savefig('./conc_' + tt + '.png', dpi = 100)
-        # plt.show()
-        
-        if tt == t[0]:
-            Cinf = sum(sum(sum(Ctot)))*dxi**3 / (Lxi*Leta*Lz)
-            
-        # print(Cinf)
-        for i in range(nx):
-            for j in range(ny):
-                for k in range(nz):
+
+mRange = 5
+
+c = 0
+n_t = 0
+
+sigmaTsigma0list = []
+sigmalist = []
+for tt in t:
+    sigma = np.zeros((nx, ny, nz))
+
+    for i in range(nxi):
+        for j in range(neta):
+            for k in range(nz):
                 
-                    sigma[i][j][k] = (Ctot[i,j,k] - Cinf)**2
-        
-        sigma = np.sqrt(sum(sum(sum(sigma))) / (dxi**3))
-        print(tt, 'sigma: ', sigma)
-        sigmalist.append(sigma)
-        itemindex = np.where(t == tt)[0][0]
-        sss = sigmalist[itemindex]/sigmalist[0]
-        sigmaTsigma0list.append(sss)
-        plt.plot(tt, sss, marker = linestyle, color = color, markersize = 3)
-    plt.ylabel('sigma[t]/sigma[t=0.4]')
-    plt.xlabel('t, s')
-    plt.legend(loc="upper right")
-    plt.ylim(0,1.1)
-    # plt.savefig('./sigma2.png', dpi = 200)
+                if c < 2:
+                    t1_1 = ((xi[i] - xi0) - u*tt)**2 / (4*D*tt)
+                    t1_2 = ((xi[i] - xi0 + 4*Lxi) - u*tt)**2 / (4*D*tt)
+                
+                elif c >= 2:
+                   # print('hi')
+                    t1_1 = ((xi[i] - xi0) - u*(tt - n_t))**2 / (4*D*tt)
+                    t1_2 = ((xi[i] + xi0 + 4*Lxi) - u*(tt - n_t))**2 / (4*D*tt)
+                    
+                #refklections along z
+                Rz = 0
+                for m in range(-3,4):
+                    Rz += np.exp(-((z[k] + 2*m*Lxi - z0)**2 / (4*D*tt))) + np.exp(-((z[k] + 2*m*Lxi + z0)**2 / (4*D*tt)))
+                    # print(m, Rz)
+                #refklections along eta
+                Reta = 0
+                for m in range(-3,4):
+                    # print(m)
+                    Reta += np.exp(-((eta[j]  + 2*m*Lxi - eta0)**2 / (4*D*tt))) + np.exp(-((eta[j]  + 2*m*Lxi + eta0)**2 / (4*D*tt)))
+                                   
+                t1 = np.exp(-t1_1) + np.exp(-t1_2)
+               
+                
+                C[i,j,k] = (S/(8*(np.pi*tt*D)**(3/2))) * t1 * Rz * Reta
+        # print(Reta1, Reta)
+    # print(c, sum(sum(sum(C)))*dxi**3 / (Lxi*Leta*Lz))
+    if (xi0+u*tt)  > xi[-1]*c:
+        c += 1
+        n_t = tt
+                
+            
+    time = str(round(tt,3)).zfill(3)
+    fig,ax = plt.subplots(1,1, figsize=(8, 2))
+    ax.set_title('V: ' + str(u) + ', time: ' +  str(time) + ' s')
+    cp = ax.contourf(XI[:,:,int((nz + 1) / 2)], ETA[:,:,int((nz + 1) / 2)], C[:,:,int((nz + 1) / 2)], levels=levels, vmin=0, vmax=vmax)
+    # plt.colorbar(cp)
+    # plt.axis('square')
+    plt.ylabel('y, m')
+    plt.xlabel('x, m')
+    fig.tight_layout()
+    # plt.savefig('./conc_' + tt + '.png', dpi = 100)
     plt.show()
+                
+    
+    C1 = C[:int(np.ceil(len(C)/4)),:,:]
+    C2 = C[int(np.ceil(len(C)/4)):int(np.ceil(len(C)/4))*2,:,:]
+    C3 = C[2*int(np.ceil(len(C)/4)):(int(np.ceil(len(C)/4)))*3,:,:]
+    C4 = C[3*int(np.ceil(len(C)/4)):,:,:]
+    
+    C2m = np.rot90(C2,k=1, axes = (0,1))
+    C3m = np.rot90(C3,k=2, axes = (0,1))
+    C4m = np.rot90(C4,k=3, axes = (0,1))
+
+    Ctot = C1 + C2m + C3m + C4m
+    # ctot2d = Ctot[:, :, int((nz + 1) / 2)]
+    
+    
+    # time = str(round(tt,3)).zfill(3)
+    # fig,ax = plt.subplots(figsize=(5, 5))
+    # fig.suptitle('V: ' + str(u) + ', time: ' +  str(time) + ' s')
+    # ax.contourf(Y, X, Ctot[:,:,-3], levels=levels, vmin=0, vmax=vmax)
+    # ax[0,0].contourf(Y, X, C1[:,:,int((nz + 1) / 2)], levels=levels, vmin=0, vmax=vmax)
+    # ax[0,1].contourf(Y, X, C2[:,:,int((nz + 1) / 2)], levels=levels, vmin=0, vmax=vmax)
+    # ax[1,0].contourf(Y, X, C3[:,:,int((nz + 1) / 2)], levels=levels, vmin=0, vmax=vmax)
+    # ax[1,1].contourf(Y, X, C4[:,:,int((nz + 1) / 2)], levels=levels, vmin=0, vmax=vmax)
+    # ax[2,0].contourf(Y, X, ctot2d, levels=levels, vmin=0, vmax=vmax)
+    # plt.colorbar(cp)
+    # plt.axis('square')
+    # plt.ylabel('y, m')
+    # plt.xlabel('x, m')
+    # fig.tight_layout()
+    # plt.savefig('./conc_' + tt + '.png', dpi = 100)
+    # plt.show()
+    
+    # if tt == t[0]:
+    Cinf = sum(sum(sum(Ctot)))*dxi**3 / (Lxi*Leta*Lz)
+    # Cinf = Cinf    
+    print(tt, Cinf)
+    # for i in range(nx):
+    #     for j in range(ny):
+    #         for k in range(nz):
+    #             sigma[i][j][k] = (Ctot[i,j,k] - Cinf)**2
+    
+    # sigma = np.sqrt(sum(sum(sum(sigma))) / (nx*ny*nz))
+    # sigmalist.append(sigma)
+    # itemindex = np.where(t == tt)[0][0]
+    # # print(itemindex,tt)
+    # sss = sigmalist[itemindex]/sigmalist[0]
+    # sigmaTsigma0list.append(sss)
+    
+    #print(tt, 'sigmaTsigma0: ', sss)
+    # if D == klist[0]:
+    #     linestyle = 'o'
+    #     label = 'K = ' + str(klist[0])
+    #     color = 'k'
+    # elif D == klist[1]:
+    #     linestyle = 's'
+    #     label = 'K = ' + str(klist[1])
+    #     color = 'r'
+    # elif D == klist[2]:
+    #     linestyle = '*'
+    #     label = 'K = ' + str(klist[2])
+    #     color = 'b'
+    # elif D == klist[3]:
+    #     linestyle = 'v'
+    #     label = 'K = ' + str(klist[3])
+    #     color = 'c'
+    # elif D == klist[4]:
+    #     linestyle = "^"
+    #     label = 'K = ' + str(klist[4])
+    #     color = 'y'
+    
+#     if tt == t[0]:
+       
+#         plt.plot(tt, sss, marker = linestyle, color = color, markersize = 3, label = label)
+#     else:
+#         plt.plot(tt, sss, marker = linestyle, color = color, markersize = 3)
+    # plt.plot(tt,Cinf, 'ro')
+# res = np.asarray([t,sigmaTsigma0list]).T
+# np.savetxt('./sigma_pallares_' + str(D) + '_' + str(dxi) +  '.dat', res)
+# plt.ylabel('sigma[t]/sigma[t=0]')
+# plt.ylabel('sum(Ctot)*dxi**3 / (Lxi*Leta*Lz)')
+# plt.xlabel('t, s')
+# plt.legend(loc="upper right")
+# plt.ylim(0,1.1)
+# plt.savefig('./sigma_pallares.png', dpi = 200)
+# plt.show()
+
