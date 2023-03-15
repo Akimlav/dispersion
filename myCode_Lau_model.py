@@ -23,7 +23,7 @@ l = 3.14 #x-length (m) of room
 w = 3.14 #y-length (m) of room
 h = 3.14 #z-length (m) of room
 
-x_o = 1 #x-coordinate of source
+x_o = 1.57 #x-coordinate of source
 y_o = 1.57 #y-coordinate of source
 
 v = 0.0856 #air velocity (m/s) from left to right. 
@@ -52,7 +52,7 @@ t_arr = np.asarray(np.linspace(delta_t,t_end,n_t))
 
 
 sigmalist = []
-klist = [1e-1, 5e-3]
+klist = [1e-3]
 colorlist = ['r','b','k','m','c','y']
 
 for K in klist:
@@ -206,23 +206,24 @@ for K in klist:
             plt.plot(t_arr[t], sss, marker = linestyle, label = label, color = color, markersize = 1)
         else:
             plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1)
-        # if t_arr[t] == t_inj+delta_t:
-        #     # sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
-        #     sigmaTsigma0list.append(sss)
+        if t_arr[t] == t_inj+delta_t:
+            sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
+            sigmaTsigma0list.append(sss)
         #     plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1, label = label)
-        # elif t_arr[t] > t_inj+delta_t:
-        #     sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
-        #     sigmaTsigma0list.append(sss)
+        elif t_arr[t] > t_inj+delta_t:
+            sss = sigmalist[t-itemindex[0][0]]/sigmalist[0]
+            sigmaTsigma0list.append(sss)
         #     plt.plot(t_arr[t], sss, marker = linestyle, color = color, markersize = 1)
         end = timer.time()
         print('loop time ', round(end - start, 3), 's')
         
     res = np.asarray([t_arr[4:],sigmaTsigma0list]).T
-    np.savetxt('./sigma_' + str(K) + '.dat', res)
+    np.savetxt('./lau_sigma_' + str(K) + '.dat', res)
         
 # plt.ylabel('sigma[t]/sigma[t=0.4]')
 plt.ylabel('sum(C)dxdy/(l*w)')
 plt.xlabel('t, s')
+plt.grid()
 # plt.legend(loc="upper right")
 plt.legend(loc="lower right")
 # plt.ylim(0,1)

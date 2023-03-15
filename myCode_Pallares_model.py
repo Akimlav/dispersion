@@ -8,31 +8,23 @@ Created on Fri Jan 27 12:12:36 2023
 
 import numpy as np
 import matplotlib.pyplot as plt
-from mpmath import nsum, inf
 
-def R1 (k):
-    ss = nsum(lambda m: np.e**(-((z[k] + 2*m*Lxi - z0)**2 / (4*D*tt))) + np.e**(-((z[k] + 2*m*Lxi + z0)**2 / (4*D*tt))), [-inf, inf])
-    return ss
-
-def R2 (j):
-    ss = nsum(lambda m: np.e**(-((eta[j]  + 2*m*Lxi - eta0)**2 / (4*D*tt))) + np.e**(-((eta[j]  + 2*m*Lxi + eta0)**2 / (4*D*tt))), [-inf, inf])
-    return ss
 
 S = 1      # generation rate
-D = 0.0152 # turbulent diffusion coefficient
-u = 0.5 #0.0856 # constant velocity
+D = 0.00152 # turbulent diffusion coefficient
+u = 0.1 #0.0856 # constant velocity
 # Dimensions of the cube
 Lxi = 1
 Leta = 1
 Lz = 1
 
 #source position
-xi0 = 0.3  # initial xi position of the source
-eta0= 0.3  # initial eta position of the source
-z0  = 0.5     # initial z position of the source
+xi0 = 0.2  # initial xi position of the source
+eta0= 0.2  # initial eta position of the source
+z0  = Lz/2     # initial z position of the source
 
 # grid for xi
-dxi = 0.025 # grid spacing
+dxi = 0.05 # grid spacing
 nx = int(np.ceil(Lxi/dxi)) # four cubes
 nxi = int(4*nx) # four cubes
 xi = np.linspace(0, 4*Lxi, nxi) # four cubes
@@ -43,7 +35,7 @@ neta = nx  # number of points
 eta = np.linspace(0, Leta, neta)
 
 # grid for z
-nz = neta
+nz = 5 #neta
 z = np.linspace(0, Lz, nz)
 
 # grid for x and y (equal to the grid of eta)
@@ -58,7 +50,7 @@ ETA,XI,Z = np.meshgrid(eta, xi, z)
 
 # times to perform the calculations
 tmin = 0
-tmax = 100
+tmax = 200
 dt = 1
 t = np.linspace(tmin, tmax, int(tmax/dt)+1)
 t = t[1:]
@@ -80,48 +72,59 @@ color = 'k'
 
 mRange = 5
 
+c1 = 0
+c2 = 4
+c3 = 8
+c4 = 12
+cc = 0
 c = 0
-n_t = 0
+
+r = int(np.ceil(tmax * u + xi0 / 4))
+n = int(np.ceil(r / 3) * 3)
+cList = np.linspace(1, n, n)
+cArr = np.reshape(cList, (int(n / 3), 3)).T
+ccArr = np.zeros(np.shape(cArr))
+ccArr[0,0] = c1
+ccArr[1,0:2] = c2
+ccArr[2,0:3] = c3
+
+
+for i in range(0,len(ccArr[0,:])):
+    for j in range(0, len(ccArr[:,0])):
+        ccArr[j,i*3+1+j:i*3+4+j] = (i+1)*12 + ccArr[j,0]
 
 sigmaTsigma0list = []
 sigmalist = []
+
+CinfList= [] 
 for tt in t:
     sigma = np.zeros((nx, ny, nz))
 
     for i in range(nxi):
         for j in range(neta):
             for k in range(nz):
+                c1 = ccArr[0,c]
+                c2 = ccArr[1,c]
+                c3 = ccArr[2,c]
                 
-                if c < 2:
-                    t1_1 = ((xi[i] - xi0) - u*tt)**2 / (4*D*tt)
-                    t1_2 = ((xi[i] - xi0 + 4*Lxi) - u*tt)**2 / (4*D*tt)
+                t1_0 = ((xi[i] - xi0 + c1*Lxi) - u*tt)**2 / (4*D*tt)
+                t1_1 = ((xi[i] - xi0 + c2*Lxi) - u*tt)**2 / (4*D*tt)
+                t1_2 = ((xi[i] - xi0 + c3*Lxi) - u*tt)**2 / (4*D*tt)
                 
-                elif c >= 2:
-                   # print('hi')
-                    t1_1 = ((xi[i] - xi0) - u*(tt - n_t))**2 / (4*D*tt)
-                    t1_2 = ((xi[i] + xi0 + 4*Lxi) - u*(tt - n_t))**2 / (4*D*tt)
-                    
-                #refklections along z
+                t1 = np.exp(-t1_0) + np.exp(-t1_1) + np.exp(-t1_2)
+                # #refklections along z
                 Rz = 0
                 for m in range(-3,4):
                     Rz += np.exp(-((z[k] + 2*m*Lxi - z0)**2 / (4*D*tt))) + np.exp(-((z[k] + 2*m*Lxi + z0)**2 / (4*D*tt)))
-                    # print(m, Rz)
                 #refklections along eta
                 Reta = 0
                 for m in range(-3,4):
-                    # print(m)
                     Reta += np.exp(-((eta[j]  + 2*m*Lxi - eta0)**2 / (4*D*tt))) + np.exp(-((eta[j]  + 2*m*Lxi + eta0)**2 / (4*D*tt)))
-                                   
-                t1 = np.exp(-t1_1) + np.exp(-t1_2)
-               
-                
+                    
                 C[i,j,k] = (S/(8*(np.pi*tt*D)**(3/2))) * t1 * Rz * Reta
-        # print(Reta1, Reta)
-    # print(c, sum(sum(sum(C)))*dxi**3 / (Lxi*Leta*Lz))
-    if (xi0+u*tt)  > xi[-1]*c:
-        c += 1
-        n_t = tt
-                
+    
+    if (xi0+u*tt)  >= xi[-1] * (c+2):
+            c += 1
             
     time = str(round(tt,3)).zfill(3)
     fig,ax = plt.subplots(1,1, figsize=(8, 2))
@@ -148,7 +151,6 @@ for tt in t:
     Ctot = C1 + C2m + C3m + C4m
     # ctot2d = Ctot[:, :, int((nz + 1) / 2)]
     
-    
     # time = str(round(tt,3)).zfill(3)
     # fig,ax = plt.subplots(figsize=(5, 5))
     # fig.suptitle('V: ' + str(u) + ', time: ' +  str(time) + ' s')
@@ -169,54 +171,36 @@ for tt in t:
     # if tt == t[0]:
     Cinf = sum(sum(sum(Ctot)))*dxi**3 / (Lxi*Leta*Lz)
     # Cinf = Cinf    
-    print(tt, Cinf)
-    # for i in range(nx):
-    #     for j in range(ny):
-    #         for k in range(nz):
-    #             sigma[i][j][k] = (Ctot[i,j,k] - Cinf)**2
+    print(tt ,(xi0+u*tt), xi[-1] * (c+2),'|', c, c1, c2, c3)
+    for i in range(nx):
+        for j in range(ny):
+            for k in range(nz):
+                sigma[i][j][k] = (Ctot[i,j,k] - Cinf)**2
     
-    # sigma = np.sqrt(sum(sum(sum(sigma))) / (nx*ny*nz))
-    # sigmalist.append(sigma)
-    # itemindex = np.where(t == tt)[0][0]
-    # # print(itemindex,tt)
-    # sss = sigmalist[itemindex]/sigmalist[0]
-    # sigmaTsigma0list.append(sss)
+    sigma = np.sqrt(sum(sum(sum(sigma))) / (nx*ny*nz))
+    sigmalist.append(sigma)
+    itemindex = np.where(t == tt)[0][0]
+    # print(itemindex,tt)
+    sss = sigmalist[itemindex]/sigmalist[0]
+    sigmaTsigma0list.append(sss)
     
-    #print(tt, 'sigmaTsigma0: ', sss)
-    # if D == klist[0]:
-    #     linestyle = 'o'
-    #     label = 'K = ' + str(klist[0])
-    #     color = 'k'
-    # elif D == klist[1]:
-    #     linestyle = 's'
-    #     label = 'K = ' + str(klist[1])
-    #     color = 'r'
-    # elif D == klist[2]:
-    #     linestyle = '*'
-    #     label = 'K = ' + str(klist[2])
-    #     color = 'b'
-    # elif D == klist[3]:
-    #     linestyle = 'v'
-    #     label = 'K = ' + str(klist[3])
-    #     color = 'c'
-    # elif D == klist[4]:
-    #     linestyle = "^"
-    #     label = 'K = ' + str(klist[4])
-    #     color = 'y'
+    CinfList.append(Cinf)
     
-#     if tt == t[0]:
-       
-#         plt.plot(tt, sss, marker = linestyle, color = color, markersize = 3, label = label)
-#     else:
-#         plt.plot(tt, sss, marker = linestyle, color = color, markersize = 3)
-    # plt.plot(tt,Cinf, 'ro')
-# res = np.asarray([t,sigmaTsigma0list]).T
-# np.savetxt('./sigma_pallares_' + str(D) + '_' + str(dxi) +  '.dat', res)
-# plt.ylabel('sigma[t]/sigma[t=0]')
-# plt.ylabel('sum(Ctot)*dxi**3 / (Lxi*Leta*Lz)')
-# plt.xlabel('t, s')
-# plt.legend(loc="upper right")
-# plt.ylim(0,1.1)
-# plt.savefig('./sigma_pallares.png', dpi = 200)
-# plt.show()
+res = np.asarray([t,sigmaTsigma0list]).T
+np.savetxt('./sigma_pallares_' + str(D) + '_' + str(dxi) +  '.dat', res)
+
+plt.plot(t,CinfList, 'ro')
+plt.ylabel('sum(Ctot)*dxi**3 / (Lxi*Leta*Lz)')
+plt.xlabel('t, s')
+plt.savefig('./sumC_pallares.png', dpi = 200)
+plt.show()
+
+
+plt.plot(res[:,0], res[:,0])
+plt.ylabel('sigma[t]/sigma[t=0]')
+plt.xlabel('t, s')
+plt.legend(loc="upper right")
+plt.ylim(0,1.1)
+plt.savefig('./sigma_pallares.png', dpi = 200)
+plt.show()
 
