@@ -11,20 +11,20 @@ import matplotlib.pyplot as plt
 
 
 S = 1      # generation rate
-D = 0.00152 # turbulent diffusion coefficient
-u = 0.1 #0.0856 # constant velocity
+D = 0.0152 # turbulent diffusion coefficient
+u = 0.0856 # constant velocity
 # Dimensions of the cube
-Lxi = 1
-Leta = 1
-Lz = 1
+Lxi = 3.1
+Leta = 3.1
+Lz = 3.1
 
 #source position
-xi0 = 0.2  # initial xi position of the source
-eta0= 0.2  # initial eta position of the source
-z0  = Lz/2     # initial z position of the source
+xi0 = 0.6  # initial xi position of the source
+eta0= 0.6  # initial eta position of the source
+z0  = 2.6     # initial z position of the source
 
 # grid for xi
-dxi = 0.05 # grid spacing
+dxi = 0.1 # grid spacing
 nx = int(np.ceil(Lxi/dxi)) # four cubes
 nxi = int(4*nx) # four cubes
 xi = np.linspace(0, 4*Lxi, nxi) # four cubes
@@ -35,7 +35,7 @@ neta = nx  # number of points
 eta = np.linspace(0, Leta, neta)
 
 # grid for z
-nz = 5 #neta
+nz = neta
 z = np.linspace(0, Lz, nz)
 
 # grid for x and y (equal to the grid of eta)
@@ -50,7 +50,7 @@ ETA,XI,Z = np.meshgrid(eta, xi, z)
 
 # times to perform the calculations
 tmin = 0
-tmax = 200
+tmax = 1400
 dt = 1
 t = np.linspace(tmin, tmax, int(tmax/dt)+1)
 t = t[1:]
@@ -70,12 +70,10 @@ linestyle = 'o'
 # label = 'K = ' + str(klist[0])
 color = 'k'
 
-mRange = 5
-
 c1 = 0
-c2 = 4
-c3 = 8
-c4 = 12
+c2 = Lxi*4
+c3 = Lxi*8
+c4 = Lxi*12
 cc = 0
 c = 0
 
@@ -91,7 +89,7 @@ ccArr[2,0:3] = c3
 
 for i in range(0,len(ccArr[0,:])):
     for j in range(0, len(ccArr[:,0])):
-        ccArr[j,i*3+1+j:i*3+4+j] = (i+1)*12 + ccArr[j,0]
+        ccArr[j,i*3+1+j:i*3+4+j] = (i+1)*Lxi*12 + ccArr[j,0]
 
 sigmaTsigma0list = []
 sigmalist = []
@@ -122,6 +120,8 @@ for tt in t:
                     Reta += np.exp(-((eta[j]  + 2*m*Lxi - eta0)**2 / (4*D*tt))) + np.exp(-((eta[j]  + 2*m*Lxi + eta0)**2 / (4*D*tt)))
                     
                 C[i,j,k] = (S/(8*(np.pi*tt*D)**(3/2))) * t1 * Rz * Reta
+                
+                C[C<S*1e-4] = 0
     
     if (xi0+u*tt)  >= xi[-1] * (c+2):
             c += 1
@@ -171,7 +171,7 @@ for tt in t:
     # if tt == t[0]:
     Cinf = sum(sum(sum(Ctot)))*dxi**3 / (Lxi*Leta*Lz)
     # Cinf = Cinf    
-    print(tt ,(xi0+u*tt), xi[-1] * (c+2),'|', c, c1, c2, c3)
+    print(tt, Cinf, (xi0+u*tt), xi[-1] * (c+2),'|', c, c1, c2, c3)
     for i in range(nx):
         for j in range(ny):
             for k in range(nz):
@@ -194,7 +194,6 @@ plt.ylabel('sum(Ctot)*dxi**3 / (Lxi*Leta*Lz)')
 plt.xlabel('t, s')
 plt.savefig('./sumC_pallares.png', dpi = 200)
 plt.show()
-
 
 plt.plot(res[:,0], res[:,0])
 plt.ylabel('sigma[t]/sigma[t=0]')
