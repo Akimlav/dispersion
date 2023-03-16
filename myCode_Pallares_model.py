@@ -10,7 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-S = 1      # generation rate
+S = 30   # generation rate
 D = 0.0152 # turbulent diffusion coefficient
 u = 0.0856 # constant velocity
 # Dimensions of the cube
@@ -21,7 +21,7 @@ Lz = 3.1
 #source position
 xi0 = 0.6  # initial xi position of the source
 eta0= 0.6  # initial eta position of the source
-z0  = 2.6     # initial z position of the source
+z0  = 2.5     # initial z position of the source
 
 # grid for xi
 dxi = 0.1 # grid spacing
@@ -78,18 +78,19 @@ cc = 0
 c = 0
 
 r = int(np.ceil(tmax * u + xi0 / 4))
-n = int(np.ceil(r / 3) * 3)
+n = int(np.ceil(r / 4) * 4)
 cList = np.linspace(1, n, n)
-cArr = np.reshape(cList, (int(n / 3), 3)).T
+cArr = np.reshape(cList, (int(n / 4), 4)).T
 ccArr = np.zeros(np.shape(cArr))
 ccArr[0,0] = c1
 ccArr[1,0:2] = c2
 ccArr[2,0:3] = c3
+ccArr[3,0:4] = c4
 
 
 for i in range(0,len(ccArr[0,:])):
     for j in range(0, len(ccArr[:,0])):
-        ccArr[j,i*3+1+j:i*3+4+j] = (i+1)*Lxi*12 + ccArr[j,0]
+        ccArr[j,i*4+1+j:i*4+5+j] = (i+1)*Lxi*16 + ccArr[j,0]
 
 sigmaTsigma0list = []
 sigmalist = []
@@ -104,12 +105,14 @@ for tt in t:
                 c1 = ccArr[0,c]
                 c2 = ccArr[1,c]
                 c3 = ccArr[2,c]
+                c4 = ccArr[3,c]
                 
                 t1_0 = ((xi[i] - xi0 + c1*Lxi) - u*tt)**2 / (4*D*tt)
                 t1_1 = ((xi[i] - xi0 + c2*Lxi) - u*tt)**2 / (4*D*tt)
                 t1_2 = ((xi[i] - xi0 + c3*Lxi) - u*tt)**2 / (4*D*tt)
+                t1_3 = ((xi[i] - xi0 + c4*Lxi) - u*tt)**2 / (4*D*tt)
                 
-                t1 = np.exp(-t1_0) + np.exp(-t1_1) + np.exp(-t1_2)
+                t1 = np.exp(-t1_0) + np.exp(-t1_1) + np.exp(-t1_2) + np.exp(-t1_3)
                 # #refklections along z
                 Rz = 0
                 for m in range(-3,4):
@@ -121,7 +124,7 @@ for tt in t:
                     
                 C[i,j,k] = (S/(8*(np.pi*tt*D)**(3/2))) * t1 * Rz * Reta
                 
-                C[C<S*1e-4] = 0
+                C[C<S*1e-15] = 0
     
     if (xi0+u*tt)  >= xi[-1] * (c+2):
             c += 1
@@ -135,8 +138,8 @@ for tt in t:
     plt.ylabel('y, m')
     plt.xlabel('x, m')
     fig.tight_layout()
-    # plt.savefig('./conc_' + tt + '.png', dpi = 100)
-    plt.show()
+    plt.savefig('.mcPm_figs/conc_' + str(int(tt)) + '.png', dpi = 100)
+    # plt.show()
                 
     
     C1 = C[:int(np.ceil(len(C)/4)),:,:]
@@ -171,7 +174,7 @@ for tt in t:
     # if tt == t[0]:
     Cinf = sum(sum(sum(Ctot)))*dxi**3 / (Lxi*Leta*Lz)
     # Cinf = Cinf    
-    print(tt, Cinf, (xi0+u*tt), xi[-1] * (c+2),'|', c, c1, c2, c3)
+    print(tt, np.round(Cinf,4), np.round((xi0+u*tt),4), np.round(xi[-1] * (c+2), 4),'|', c, c1, c2, c3, c4)
     for i in range(nx):
         for j in range(ny):
             for k in range(nz):
@@ -193,7 +196,7 @@ plt.plot(t,CinfList, 'ro')
 plt.ylabel('sum(Ctot)*dxi**3 / (Lxi*Leta*Lz)')
 plt.xlabel('t, s')
 plt.savefig('./sumC_pallares.png', dpi = 200)
-plt.show()
+# plt.show()
 
 plt.plot(res[:,0], res[:,0])
 plt.ylabel('sigma[t]/sigma[t=0]')
@@ -201,5 +204,5 @@ plt.xlabel('t, s')
 plt.legend(loc="upper right")
 plt.ylim(0,1.1)
 plt.savefig('./sigma_pallares.png', dpi = 200)
-plt.show()
+# plt.show()
 
