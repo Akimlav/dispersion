@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 
 S = 30   # generation rate
-D = 0.0152 # turbulent diffusion coefficient
+D = 0.02 # turbulent diffusion coefficient
 u = 0.0856 # constant velocity
 # Dimensions of the cube
 Lxi = 3.1
@@ -23,12 +23,15 @@ xi0 = 0.6  # initial xi position of the source
 eta0= 0.6  # initial eta position of the source
 z0  = 2.5     # initial z position of the source
 
+tmin = 0
+tmax = 10
+dt = 0.1
+
 # grid for xi
-dxi = 0.1 # grid spacing
+dxi = 0.15 # grid spacing
 nx = int(np.ceil(Lxi/dxi)) # four cubes
 nxi = int(4*nx) # four cubes
 xi = np.linspace(0, 4*Lxi, nxi) # four cubes
-
 
 # grid for eta
 neta = nx  # number of points
@@ -49,9 +52,6 @@ X,Y = np.meshgrid(x,y) #define numpy meshgrid for X,Y
 ETA,XI,Z = np.meshgrid(eta, xi, z)
 
 # times to perform the calculations
-tmin = 0
-tmax = 1400
-dt = 1
 t = np.linspace(tmin, tmax, int(tmax/dt)+1)
 t = t[1:]
 C = np.zeros((nxi, neta, nz))
@@ -67,7 +67,6 @@ vmax = 1
 levels = np.linspace(0, vmax, nx+1)
 
 linestyle = 'o'
-# label = 'K = ' + str(klist[0])
 color = 'k'
 
 c1 = 0
@@ -88,6 +87,7 @@ ccArr[2,0:3] = c3
 ccArr[3,0:4] = c4
 
 
+
 for i in range(0,len(ccArr[0,:])):
     for j in range(0, len(ccArr[:,0])):
         ccArr[j,i*4+1+j:i*4+5+j] = (i+1)*Lxi*16 + ccArr[j,0]
@@ -98,6 +98,14 @@ sigmalist = []
 CinfList= [] 
 for tt in t:
     sigma = np.zeros((nx, ny, nz))
+    C = np.zeros((nxi, neta, nz))
+    C1 = np.zeros((nx, ny, nz))
+    C2 = np.zeros((nx, ny, nz))
+    C3 = np.zeros((nx, ny, nz))
+    C4 = np.zeros((nx, ny, nz))
+    C2m = np.zeros((nx, ny, nz))
+    C3m = np.zeros((nx, ny, nz))
+    C4m = np.zeros((nx, ny, nz))
 
     for i in range(nxi):
         for j in range(neta):
@@ -107,10 +115,10 @@ for tt in t:
                 c3 = ccArr[2,c]
                 c4 = ccArr[3,c]
                 
-                t1_0 = ((xi[i] - xi0 + c1*Lxi) - u*tt)**2 / (4*D*tt)
-                t1_1 = ((xi[i] - xi0 + c2*Lxi) - u*tt)**2 / (4*D*tt)
-                t1_2 = ((xi[i] - xi0 + c3*Lxi) - u*tt)**2 / (4*D*tt)
-                t1_3 = ((xi[i] - xi0 + c4*Lxi) - u*tt)**2 / (4*D*tt)
+                t1_0 = ((xi[i] - xi0 + c1) - u*tt)**2 / (4*D*tt)
+                t1_1 = ((xi[i] - xi0 + c2) - u*tt)**2 / (4*D*tt)
+                t1_2 = ((xi[i] - xi0 + c3) - u*tt)**2 / (4*D*tt)
+                t1_3 = ((xi[i] - xi0 + c4) - u*tt)**2 / (4*D*tt)
                 
                 t1 = np.exp(-t1_0) + np.exp(-t1_1) + np.exp(-t1_2) + np.exp(-t1_3)
                 # #refklections along z
@@ -129,16 +137,17 @@ for tt in t:
     if (xi0+u*tt)  >= xi[-1] * (c+2):
             c += 1
             
-    time = str(round(tt,3)).zfill(3)
-    fig,ax = plt.subplots(1,1, figsize=(8, 2))
-    ax.set_title('V: ' + str(u) + ', time: ' +  str(time) + ' s')
-    cp = ax.contourf(XI[:,:,int((nz + 1) / 2)], ETA[:,:,int((nz + 1) / 2)], C[:,:,int((nz + 1) / 2)], levels=levels, vmin=0, vmax=vmax)
-    # plt.colorbar(cp)
-    # plt.axis('square')
-    plt.ylabel('y, m')
-    plt.xlabel('x, m')
-    fig.tight_layout()
-    plt.savefig('.mcPm_figs/conc_' + str(int(tt)) + '.png', dpi = 100)
+    # time = str(round(tt,3)).zfill(3)
+    # fig,ax = plt.subplots(1,1, figsize=(8, 2))
+    # ax.set_title('V: ' + str(u) + ', time: ' +  str(time) + ' s')
+    # # cp = ax.contourf(XI[:,:,int((nz + 1) / 2)], ETA[:,:,int((nz + 1) / 2)], C[:,:,int((nz + 1) / 2)], levels=levels, vmin=0, vmax=vmax)
+    # cp = ax.contourf(XI[:,:,13], ETA[:,:,13], C[:,:,13], levels=levels, vmin=0, vmax=vmax)
+    # # plt.colorbar(cp)
+    # # plt.axis('square')
+    # plt.ylabel('y, m')
+    # plt.xlabel('x, m')
+    # fig.tight_layout()
+    # # plt.savefig('.mcPm_figs/conc_' + str(int(tt)) + '.png', dpi = 100)
     # plt.show()
                 
     
@@ -171,38 +180,18 @@ for tt in t:
     # plt.savefig('./conc_' + tt + '.png', dpi = 100)
     # plt.show()
     
-    # if tt == t[0]:
     Cinf = sum(sum(sum(Ctot)))*dxi**3 / (Lxi*Leta*Lz)
-    # Cinf = Cinf    
-    print(tt, np.round(Cinf,4), np.round((xi0+u*tt),4), np.round(xi[-1] * (c+2), 4),'|', c, c1, c2, c3, c4)
+    # print(tt, np.round(Cinf,4), np.round((xi0+u*tt),4), np.round(xi[-1] * (c+2), 4),'|', c, c1, c2, c3, c4)
+    
     for i in range(nx):
         for j in range(ny):
             for k in range(nz):
                 sigma[i][j][k] = (Ctot[i,j,k] - Cinf)**2
     
     sigma = np.sqrt(sum(sum(sum(sigma))) / (nx*ny*nz))
+    print(sigma)
+    print('------')
     sigmalist.append(sigma)
-    itemindex = np.where(t == tt)[0][0]
-    # print(itemindex,tt)
-    sss = sigmalist[itemindex]/sigmalist[0]
-    sigmaTsigma0list.append(sss)
     
-    CinfList.append(Cinf)
-    
-res = np.asarray([t,sigmaTsigma0list]).T
-np.savetxt('./sigma_pallares_' + str(D) + '_' + str(dxi) +  '.dat', res)
-
-plt.plot(t,CinfList, 'ro')
-plt.ylabel('sum(Ctot)*dxi**3 / (Lxi*Leta*Lz)')
-plt.xlabel('t, s')
-plt.savefig('./sumC_pallares.png', dpi = 200)
-# plt.show()
-
-plt.plot(res[:,0], res[:,0])
-plt.ylabel('sigma[t]/sigma[t=0]')
-plt.xlabel('t, s')
-plt.legend(loc="upper right")
-plt.ylim(0,1.1)
-plt.savefig('./sigma_pallares.png', dpi = 200)
-# plt.show()
-
+res = np.asarray([t,sigmalist]).T
+np.savetxt('./sigma_pallares_' + str(D) + '_' + str(dxi) + '_' + str(dxi) + '.dat', res)
